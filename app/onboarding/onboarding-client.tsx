@@ -85,11 +85,7 @@ export function OnboardingClient() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.24, ease: "easeOut" }}
           >
-            <div className="w-full -translate-y-12 space-y-11 text-center">
-              <h1 className="text-[48px] font-semibold leading-none tracking-normal text-white">
-                Continue
-              </h1>
-
+            <div className="w-full -translate-y-6 space-y-6 text-center">
               <div className="space-y-4">
                 <form
                   onSubmit={signInWithEmail}
