@@ -13,7 +13,6 @@ import {
   Activity,
   BarChart3,
   Bike,
-  Camera,
   Check,
   Clock3,
   Dumbbell,
@@ -27,7 +26,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   revalidateCachedJson,
   setCachedData,
@@ -36,13 +35,20 @@ import {
 import { useTodayStore } from "@/store/useTodayStore";
 
 const accent = "#32D74B";
-const quickSuggestions = ["Chicken Rice", "Latte", "Banana", "Eggs"];
+const quickSuggestions = ["Rice", "Egg", "Banana", "宫保鸡丁"];
 const workoutSuggestions = ["Running", "Walking", "Gym", "Cycling", "Yoga", "Custom"];
 const durationOptions = [15, 30, 45, 60];
+const mealPortionOptions = ["small", "medium", "large"] as const;
 
 type MealEstimate = {
-  calories: number;
+  matched?: boolean;
+  calories: number | null;
   items: { name: string; calories?: number }[];
+  message?: string;
+  reason?: string;
+  grams?: number;
+  portionSize?: "small" | "medium" | "large";
+  portionMode?: "weight" | "unit";
 };
 
 type WorkoutEstimate = {
@@ -474,58 +480,38 @@ function AddMealSheet({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [description, setDescription] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "analyzing" | "result" | "saving" | "error">("idle");
+  const [portionSize, setPortionSize] =
+    useState<(typeof mealPortionOptions)[number]>("medium");
+  const [manualCalories, setManualCalories] = useState("");
+  const [status, setStatus] = useState<"idle" | "estimating" | "result" | "manual" | "saving" | "error">("idle");
   const [estimate, setEstimate] = useState<MealEstimate | null>(null);
+  const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    return () => {
-      if (photoPreview) {
-        URL.revokeObjectURL(photoPreview);
-      }
-    };
-  }, [photoPreview]);
-
-  const resetPhoto = () => {
-    if (photoPreview) {
-      URL.revokeObjectURL(photoPreview);
-    }
-    setPhoto(null);
-    setPhotoPreview(null);
+  const resetEstimate = () => {
     setEstimate(null);
-    setStatus("idle");
-  };
-
-  const selectPhoto = (file: File | undefined) => {
-    if (!file) return;
-    if (photoPreview) {
-      URL.revokeObjectURL(photoPreview);
-    }
-    setPhoto(file);
-    setPhotoPreview(URL.createObjectURL(file));
-    setEstimate(null);
+    setManualCalories("");
+    setMessage("");
     setStatus("idle");
   };
 
   const analyzeMeal = async (mealText = description) => {
-    if (!mealText.trim() && !photo) return;
+    if (!mealText.trim()) return;
 
-    setStatus("analyzing");
+    setStatus("estimating");
     setEstimate(null);
-
-    const formData = new FormData();
-    formData.append("description", mealText.trim());
-    if (photo) {
-      formData.append("image", photo);
-    }
+    setMessage("");
 
     try {
       const response = await fetch("/api/meal", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: mealText.trim(),
+          portionSize,
+        }),
       });
 
       if (!response.ok) {
@@ -533,9 +519,19 @@ function AddMealSheet({
       }
 
       const data = (await response.json()) as MealEstimate;
+      if (data.matched === false || data.calories === null) {
+        setEstimate(data);
+        setManualCalories("");
+        setMessage(data.message ?? "Food not found. Please enter calories manually.");
+        setStatus(data.reason === "multiple_foods" ? "error" : "manual");
+        return;
+      }
+
       setEstimate(data);
+      setManualCalories(String(data.calories));
       setStatus("result");
     } catch {
+      setMessage("Could not estimate calories.");
       setStatus("error");
     }
   };
@@ -546,7 +542,8 @@ function AddMealSheet({
   };
 
   const saveMeal = async () => {
-    if (!estimate) return;
+    const calories = Number(manualCalories);
+    if (!description.trim() || !Number.isFinite(calories)) return;
 
     setStatus("saving");
     try {
@@ -556,8 +553,10 @@ function AddMealSheet({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: (estimate.items[0]?.name ?? description.trim()) || "Meal",
-          calories: estimate.calories,
+          name: (estimate?.items[0]?.name ?? description.trim()) || "Meal",
+          quantity: "1",
+          unit: estimate?.portionMode === "weight" ? portionSize : "serving",
+          calories,
         }),
       });
 
@@ -566,6 +565,12 @@ function AddMealSheet({
       }
 
       onSaved();
+      setDescription("");
+      setPortionSize("medium");
+      setManualCalories("");
+      setEstimate(null);
+      setMessage("");
+      setStatus("idle");
       onClose();
     } catch {
       setStatus("error");
@@ -606,58 +611,40 @@ function AddMealSheet({
                 Add meal
               </h2>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                capture="environment"
-                className="hidden"
-                onChange={(event) => selectPhoto(event.target.files?.[0])}
-              />
-
-              {photoPreview ? (
-                <div className="relative overflow-hidden rounded-[16px] border border-border">
-                  <div
-                    aria-label="Selected meal photo"
-                    className="h-[216px] w-full bg-cover bg-center"
-                    style={{ backgroundImage: `url(${photoPreview})` }}
-                  />
-                  <button
-                    type="button"
-                    aria-label="Remove photo"
-                    onClick={resetPhoto}
-                    className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-muted/45 text-foreground backdrop-blur-md"
-                  >
-                    <X className="size-5" strokeWidth={1.8} />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mx-auto flex h-12 items-center gap-2.5 rounded-full border border-border bg-muted px-4 text-[#32D74B] transition active:scale-[0.98]"
-                  aria-label="Take a photo"
-                >
-                  <Camera className="size-5" strokeWidth={1.9} />
-                  <span className="text-[14px] font-medium text-foreground/75">Add photo</span>
-                </button>
-              )}
-
-              <div className="flex min-h-[132px] items-start rounded-[22px] border border-border bg-muted px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_42px_rgba(0,0,0,0.16)]">
+              <div className="space-y-2">
+                <p className="text-[13px] font-medium text-secondary/85">Food description / note</p>
+                <div className="flex min-h-[132px] items-start rounded-[22px] border border-border bg-muted px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_42px_rgba(0,0,0,0.16)]">
                 <textarea
                   value={description}
                   onChange={(event) => {
                     setDescription(event.target.value);
-                    if (status !== "idle") {
-                      setStatus("idle");
-                      setEstimate(null);
-                    }
+                    resetEstimate();
                   }}
-                  placeholder={photoPreview ? "Add a few words, if helpful..." : "Chicken rice and egg..."}
+                  placeholder="Food description / note"
                   rows={3}
                   className="max-h-32 min-h-[108px] flex-1 resize-none bg-transparent py-5 text-[18px] leading-7 text-foreground outline-none placeholder:text-secondary/75"
                 />
-                <Mic className="ml-3 mt-5 size-5 shrink-0 text-foreground/45" strokeWidth={1.8} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {mealPortionOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => {
+                      setPortionSize(option);
+                      resetEstimate();
+                    }}
+                    className={`h-10 rounded-full border text-[14px] font-semibold capitalize transition active:scale-[0.98] ${
+                      portionSize === option
+                        ? "border-[#32D74B]/65 bg-[#32D74B]/16 text-[#32D74B]"
+                        : "border-border bg-muted text-foreground/65"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
               </div>
 
               <div className="space-y-2">
@@ -677,7 +664,7 @@ function AddMealSheet({
               </div>
 
               <AnimatePresence mode="wait">
-                {status === "analyzing" ? (
+                {status === "estimating" ? (
                   <motion.div
                     key="loading"
                     className="flex h-[178px] flex-col items-center justify-center rounded-[16px] border border-border bg-muted"
@@ -693,9 +680,9 @@ function AddMealSheet({
                         transition={{ duration: 1.1, ease: "linear", repeat: Infinity }}
                       />
                     </div>
-                    <p className="mt-5 text-[18px] font-medium text-foreground">Analyzing meal...</p>
+                    <p className="mt-5 text-[18px] font-medium text-foreground">Estimating meal...</p>
                     <p className="mt-2 text-[14px] font-medium text-secondary">
-                      This may take a few seconds
+                      Using local food reference
                     </p>
                   </motion.div>
                 ) : status === "result" && estimate ? (
@@ -711,7 +698,7 @@ function AddMealSheet({
                       <div>
                         <p className="text-[13px] font-medium text-secondary/85">Estimated</p>
                         <p className="mt-1 text-[38px] font-semibold leading-none text-[#32D74B]/90">
-                          {estimate.calories}
+                          {manualCalories || estimate.calories}
                           <span className="ml-1 text-[15px] font-medium text-[#32D74B]/70">
                             kcal
                           </span>
@@ -720,7 +707,8 @@ function AddMealSheet({
                       <button
                         type="button"
                         onClick={() => void saveMeal()}
-                        className="mt-1 flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-muted px-4 text-[14px] font-medium text-foreground/80 transition active:scale-[0.98]"
+                        disabled={!manualCalories}
+                        className="mt-1 flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-muted px-4 text-[14px] font-medium text-foreground/80 transition active:scale-[0.98] disabled:opacity-45"
                       >
                         <Check className="size-4 text-[#32D74B]/85" strokeWidth={2.2} />
                         Save
@@ -737,7 +725,52 @@ function AddMealSheet({
                           ) : null}
                         </div>
                       ))}
+                      {estimate.grams ? (
+                        <p className="text-[13px] font-medium text-secondary">
+                          About {estimate.grams}g · edit calories if needed
+                        </p>
+                      ) : null}
+                      <div className="flex h-11 items-center rounded-full border border-border bg-muted px-5">
+                        <input
+                          value={manualCalories}
+                          onChange={(event) => setManualCalories(event.target.value.replace(/[^\d]/g, ""))}
+                          inputMode="numeric"
+                          placeholder="Calories"
+                          className="min-w-0 flex-1 bg-transparent text-[16px] font-medium text-foreground outline-none placeholder:text-secondary/75"
+                        />
+                        <span className="text-[15px] font-medium text-secondary">kcal</span>
+                      </div>
                     </div>
+                  </motion.div>
+                ) : status === "manual" ? (
+                  <motion.div
+                    key="manual"
+                    className="border-t border-border pt-5"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.22 }}
+                  >
+                    <p className="text-[15px] font-semibold text-foreground">{message}</p>
+                    <div className="mt-4 flex h-11 items-center rounded-full border border-border bg-muted px-5">
+                      <input
+                        value={manualCalories}
+                        onChange={(event) => setManualCalories(event.target.value.replace(/[^\d]/g, ""))}
+                        inputMode="numeric"
+                        placeholder="Calories"
+                        className="min-w-0 flex-1 bg-transparent text-[16px] font-medium text-foreground outline-none placeholder:text-secondary/75"
+                      />
+                      <span className="text-[15px] font-medium text-secondary">kcal</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void saveMeal()}
+                      disabled={!manualCalories}
+                      className="mt-4 flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-muted px-4 text-[14px] font-medium text-foreground/80 transition active:scale-[0.98] disabled:opacity-45"
+                    >
+                      <Check className="size-4 text-[#32D74B]/85" strokeWidth={2.2} />
+                      Save
+                    </button>
                   </motion.div>
                 ) : status === "error" ? (
                   <motion.div
@@ -749,20 +782,20 @@ function AddMealSheet({
                     transition={{ duration: 0.22 }}
                   >
                     <p className="text-[17px] font-semibold text-foreground">
-                      Couldn&apos;t estimate calories.
+                      {message || "Couldn&apos;t estimate calories."}
                     </p>
                     <p className="mt-2 text-[14px] font-medium text-secondary">
-                      Try another photo.
+                      Please enter one food at a time.
                     </p>
                     <button
                       type="button"
-                      onClick={() => setStatus("idle")}
+                      onClick={resetEstimate}
                       className="mt-5 rounded-full bg-muted px-9 py-3 text-[15px] font-semibold text-foreground"
                     >
                       Try Again
                     </button>
                   </motion.div>
-                ) : photoPreview || description.trim() ? (
+                ) : description.trim() ? (
                   <motion.button
                     key="analyze"
                     type="button"
@@ -774,7 +807,7 @@ function AddMealSheet({
                     transition={{ duration: 0.2 }}
                   >
                     <Sparkles className="size-4 fill-black" strokeWidth={2} />
-                    Analyze Meal
+                    Estimate Meal
                   </motion.button>
                 ) : null}
               </AnimatePresence>
@@ -968,12 +1001,12 @@ function AddActionSheet({
                 className="flex h-15 w-full items-center gap-4 rounded-[16px] px-4 text-left transition active:bg-muted"
               >
                 <span className="flex size-11 items-center justify-center rounded-full bg-[#32D74B]/15 text-[#32D74B]">
-                  <Camera className="size-5" strokeWidth={2} />
+                  <Pencil className="size-5" strokeWidth={2} />
                 </span>
                 <span>
                   <span className="block text-[17px] font-semibold text-foreground">Add Meal</span>
                   <span className="mt-0.5 block text-[13px] font-medium text-secondary">
-                    Photo or natural text
+                    One food at a time
                   </span>
                 </span>
               </button>

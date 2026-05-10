@@ -10,6 +10,7 @@ import {
   HomeIcon,
   Moon,
   Plus,
+  Trophy,
   UserRound,
   X,
 } from "lucide-react";
@@ -32,6 +33,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useTodayStore } from "@/store/useTodayStore";
 
 type SettingKey = "language" | "appearance";
+type LeaderboardMetric = "weight" | "netCalories" | "workoutBurn";
 type Appearance = "Dark" | "Light";
 type Language = "English" | "中文";
 
@@ -43,6 +45,7 @@ type ProfileData = {
   activity_level: ActivityLevel | null;
   language: "en" | "zh";
   theme: "dark" | "light";
+  show_on_leaderboard: boolean;
 };
 
 type WeightData = {
@@ -50,6 +53,20 @@ type WeightData = {
 };
 
 type PersonalData = DailyBurnProfile;
+
+type LeaderboardRow = {
+  rank: number;
+  userId: string;
+  emailPrefix: string;
+  value: number;
+};
+
+type LeaderboardData = {
+  date: string;
+  weight: LeaderboardRow[];
+  netCalories: LeaderboardRow[];
+  workoutBurn: LeaderboardRow[];
+};
 
 type PersonalDraft = {
   gender: Gender;
@@ -73,10 +90,18 @@ const fallbackProfileData: ProfileData = {
   activity_level: null,
   language: "en",
   theme: "dark",
+  show_on_leaderboard: false,
 };
 
 const fallbackWeightData: WeightData = {
   weight_kg: null,
+};
+
+const fallbackLeaderboardData: LeaderboardData = {
+  date: "",
+  weight: [],
+  netCalories: [],
+  workoutBurn: [],
 };
 
 const settingCopy: Record<
@@ -135,6 +160,12 @@ const text = {
     dark: "Dark",
     lightMode: "Light",
     logout: "Logout",
+    leaderboard: "Leaderboard",
+    showMeOnLeaderboard: "Show me on leaderboard",
+    noRankingsYet: "No rankings yet",
+    weight: "Weight",
+    netCalories: "Net Calories",
+    workoutBurn: "Workout Burn",
   },
   中文: {
     profile: "个人",
@@ -162,6 +193,12 @@ const text = {
     dark: "深色",
     lightMode: "浅色",
     logout: "退出登录",
+    leaderboard: "排行榜",
+    showMeOnLeaderboard: "显示在排行榜",
+    noRankingsYet: "No rankings yet",
+    weight: "体重",
+    netCalories: "净热量",
+    workoutBurn: "运动消耗",
   },
 };
 
@@ -331,6 +368,129 @@ function SettingSheet({
                   ))}
                 </div>
               ) : null}
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
+function LeaderboardSheet({
+  open,
+  language,
+  data,
+  onClose,
+}: {
+  open: boolean;
+  language: Language;
+  data: LeaderboardData;
+  onClose: () => void;
+}) {
+  const copy = text[language];
+  const [activeMetric, setActiveMetric] = useState<LeaderboardMetric>("weight");
+  const tabs: Array<{ key: LeaderboardMetric; label: string; unit: string }> = [
+    { key: "weight", label: copy.weight, unit: "kg" },
+    { key: "netCalories", label: copy.netCalories, unit: "kcal" },
+    { key: "workoutBurn", label: copy.workoutBurn, unit: "kcal" },
+  ];
+  const activeTab = tabs.find((tab) => tab.key === activeMetric) ?? tabs[0];
+  const rows = data[activeMetric];
+
+  return (
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-end bg-muted/35 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={onClose}
+        >
+          <motion.div
+            className="w-full px-4 pb-[calc(18px+env(safe-area-inset-bottom))]"
+            initial={{ y: 28, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 28, opacity: 0 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div
+              className="rounded-[24px] border border-border bg-card/96 px-5 pb-5 pt-4 shadow-[0_18px_60px_rgba(0,0,0,0.28)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-[22px] font-semibold leading-tight text-foreground">
+                    {copy.leaderboard}
+                  </h2>
+                  <p className="mt-2 text-[15px] font-medium leading-5 text-secondary">
+                    Yesterday
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close leaderboard"
+                  onClick={onClose}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground/75 transition active:scale-95"
+                >
+                  <X className="size-5" strokeWidth={1.8} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 border-b border-border">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveMetric(tab.key)}
+                    className={`relative h-11 text-center text-[14px] font-medium transition ${
+                      tab.key === activeMetric ? "text-foreground" : "text-secondary"
+                    }`}
+                  >
+                    {tab.label}
+                    {tab.key === activeMetric ? (
+                      <motion.span
+                        layoutId="leaderboard-metric-underline"
+                        className="absolute bottom-[-1px] left-0 right-0 mx-auto h-px w-[72%] bg-[#32D74B]"
+                        transition={{ duration: 0.22, ease: "easeOut" }}
+                      />
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-5 min-h-[190px]">
+                {rows.length ? (
+                  <div>
+                    {rows.map((row) => (
+                      <div
+                        key={`${activeMetric}-${row.userId}`}
+                        className="flex h-12 items-center border-b border-border last:border-b-0"
+                      >
+                        <span className="w-11 text-[16px] font-medium text-secondary">
+                          #{row.rank}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-[17px] font-medium text-foreground">
+                          {row.emailPrefix}
+                        </span>
+                        <span className="text-[16px] font-medium text-foreground">
+                          {row.value.toLocaleString("en-US")}
+                          <span className="ml-1 text-[13px] font-medium text-secondary">
+                            {activeTab.unit}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-[190px] items-center justify-center rounded-[18px] border border-border bg-muted">
+                    <p className="text-[15px] font-medium text-secondary">
+                      {copy.noRankingsYet}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -513,6 +673,11 @@ export default function ProfilePage() {
     url: "/api/weight",
     fallbackData: fallbackWeightData,
   });
+  const { data: leaderboardData } = useCachedJson<LeaderboardData>({
+    key: "leaderboard",
+    url: "/api/leaderboard",
+    fallbackData: fallbackLeaderboardData,
+  });
   const personalData = useMemo<PersonalData>(
     () => ({
       gender: profileData.gender,
@@ -534,6 +699,7 @@ export default function ProfilePage() {
     typeof weightData.weight_kg === "number" ? weightData.weight_kg : null;
   const [personalSheetOpen, setPersonalSheetOpen] = useState(false);
   const [activeSetting, setActiveSetting] = useState<SettingKey | null>(null);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const storedTheme = useTodayStore((state) => state.theme);
   const storedLanguage = useTodayStore((state) => state.language);
   const setStoredTheme = useTodayStore((state) => state.setTheme);
@@ -594,6 +760,7 @@ export default function ProfilePage() {
     void revalidateCachedJson("home", "/api/home");
     void revalidateCachedJson("stats", "/api/stats");
     void revalidateCachedJson("history", "/api/history");
+    void revalidateCachedJson("leaderboard", "/api/leaderboard");
 
     return true;
   };
@@ -630,6 +797,12 @@ export default function ProfilePage() {
   const openPersonalSheet = () => {
     setPersonalDraft(personalDataToDraft(personalData));
     setPersonalSheetOpen(true);
+  };
+
+  const toggleLeaderboardVisibility = async () => {
+    await saveProfile({
+      show_on_leaderboard: !profileData.show_on_leaderboard,
+    });
   };
 
   const logout = async () => {
@@ -745,13 +918,56 @@ export default function ProfilePage() {
                 />
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setLeaderboardOpen(true)}
+              className="flex h-[68px] w-full items-center text-left transition"
+            >
+              <Trophy
+                className="mr-5 size-5 shrink-0 text-[#32D74B]/65"
+                strokeWidth={1.55}
+              />
+              <span className="min-w-0 flex-1 text-[18px] font-medium leading-none text-foreground">
+                {copy.leaderboard}
+              </span>
+              <span
+                role="switch"
+                aria-checked={profileData.show_on_leaderboard}
+                tabIndex={0}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void toggleLeaderboardVisibility();
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter" && event.key !== " ") return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  void toggleLeaderboardVisibility();
+                }}
+                className={`mr-3 flex h-7 w-12 shrink-0 cursor-pointer rounded-full border p-0.5 transition ${
+                  profileData.show_on_leaderboard
+                    ? "border-primary bg-primary/25"
+                    : "border-border bg-muted"
+                }`}
+              >
+                <span
+                  className={`block size-5 rounded-full bg-foreground transition ${
+                    profileData.show_on_leaderboard ? "translate-x-5" : ""
+                  }`}
+                />
+              </span>
+              <ChevronRight
+                className="size-4 shrink-0 text-secondary/72"
+                strokeWidth={1.8}
+              />
+            </button>
           </div>
         </section>
 
         <button
           type="button"
           onClick={() => void logout()}
-          className="mt-auto h-[58px] border-t border-border text-left text-[17px] font-medium text-secondary transition active:text-foreground"
+          className="mt-auto h-[58px] border-t border-border text-right text-[17px] font-medium text-secondary transition active:text-foreground"
         >
           {copy.logout}
         </button>
@@ -781,6 +997,12 @@ export default function ProfilePage() {
           void saveProfile({ language: nextStoredLanguage });
         }}
         onClose={() => setActiveSetting(null)}
+      />
+      <LeaderboardSheet
+        open={leaderboardOpen}
+        language={language}
+        data={leaderboardData}
+        onClose={() => setLeaderboardOpen(false)}
       />
     </>
   );

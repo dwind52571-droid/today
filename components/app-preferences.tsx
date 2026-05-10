@@ -27,10 +27,16 @@ import { useTodayStore } from "@/store/useTodayStore";
 type AddMode = "menu" | "meal" | "weight" | "workout";
 type WorkoutDuration = number | "custom";
 type EstimateStatus = "idle" | "estimating" | "estimated";
+const mealPortionOptions = ["small", "medium", "large"] as const;
 type MealEstimate = {
-  calories: number;
-  source: "ai" | "local";
-  confidence: "high" | "medium" | "low";
+  matched?: boolean;
+  calories: number | null;
+  source: "local";
+  confidence?: "reference";
+  message?: string;
+  reason?: string;
+  grams?: number;
+  portionMode?: "weight" | "unit";
 };
 type WorkoutEstimate = {
   calories: number;
@@ -135,8 +141,8 @@ function GlobalAddSheet() {
   const [mode, setMode] = useState<AddMode>("menu");
   const [weight, setWeight] = useState("");
   const [mealName, setMealName] = useState("");
-  const [mealQuantity, setMealQuantity] = useState("");
-  const [mealUnit, setMealUnit] = useState("");
+  const [mealPortionSize, setMealPortionSize] =
+    useState<(typeof mealPortionOptions)[number]>("medium");
   const [mealCalories, setMealCalories] = useState("");
   const [mealEstimate, setMealEstimate] = useState<MealEstimate | null>(null);
   const [mealEstimateStatus, setMealEstimateStatus] = useState<EstimateStatus>("idle");
@@ -344,7 +350,6 @@ function GlobalAddSheet() {
 	  };
 
   const saveMeal = async () => {
-    const quantityValue = mealQuantity.trim() || "1";
     const calories = roundCalories(Number(mealCalories));
     if (!mealName.trim() || !Number.isFinite(calories)) return;
 
@@ -356,8 +361,8 @@ function GlobalAddSheet() {
       const { error } = await supabase.from("meals").insert({
         user_id: user.id,
 	        name: mealName.trim(),
-	        quantity: quantityValue,
-	        unit: mealUnit.trim() || null,
+	        quantity: "1",
+	        unit: mealEstimate?.portionMode === "weight" ? mealPortionSize : "serving",
 	        calories,
       });
 
@@ -381,8 +386,7 @@ function GlobalAddSheet() {
 
 	    setSaving(false);
 	    setMealName("");
-	    setMealQuantity("");
-	    setMealUnit("");
+    setMealPortionSize("medium");
 	    setMealCalories("");
     optimisticallyAddMeal(calories);
     refreshHealthCaches();
@@ -404,8 +408,7 @@ function GlobalAddSheet() {
         },
         body: JSON.stringify({
           name,
-          quantity: mealQuantity.trim() || "1",
-          unit: mealUnit.trim() || "",
+          portionSize: mealPortionSize,
         }),
       });
 
@@ -415,6 +418,13 @@ function GlobalAddSheet() {
 
       const data = (await response.json()) as MealEstimate;
       setMealEstimate(data);
+      if (data.matched === false || data.calories === null) {
+        setMealCalories("");
+        setError(data.message ?? "Food not found. Please enter calories manually.");
+        setMealEstimateStatus("estimated");
+        return;
+      }
+
       setMealCalories(String(roundCalories(data.calories)));
       setMealEstimateStatus("estimated");
     } catch (error) {
@@ -666,7 +676,7 @@ function GlobalAddSheet() {
                   <span>
                     <span className="block text-[17px] font-semibold text-foreground">Add Meal</span>
                     <span className="mt-0.5 block text-[13px] font-medium text-secondary">
-                      Food and quantity
+                      One food at a time
                     </span>
                   </span>
                 </button>
@@ -712,6 +722,8 @@ function GlobalAddSheet() {
                   Add meal
                 </h2>
 
+                <div className="space-y-2">
+                  <p className="text-[13px] font-medium text-secondary/85">Food description / note</p>
 	                <div className="flex min-h-[118px] items-start rounded-[22px] border border-border bg-muted px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_42px_rgba(0,0,0,0.16)]">
 	                  <Utensils className="mr-4 mt-5 size-6 shrink-0 text-[#32D74B]" strokeWidth={2.1} />
 	                  <textarea
@@ -721,45 +733,40 @@ function GlobalAddSheet() {
 	                      resetMealEstimate();
 	                      setError("");
 	                    }}
-                    placeholder="Food name..."
+                    placeholder="Food description / note"
 	                    rows={2}
 	                    className="max-h-28 min-h-[100px] flex-1 resize-none bg-transparent py-4 text-[19px] leading-7 text-foreground outline-none placeholder:text-secondary/78"
 	                  />
 	                </div>
+                </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex h-11 items-center rounded-full border border-border bg-muted px-5">
-                    <input
-                      value={mealQuantity}
-	                      onChange={(event) => {
-	                        setMealQuantity(event.target.value);
-	                        resetMealEstimate();
-	                        setError("");
-	                      }}
-                      placeholder="Amount"
-                      className="min-w-0 flex-1 bg-transparent text-[16px] font-medium text-foreground outline-none placeholder:text-secondary/75"
-                    />
-                  </div>
-                  <div className="flex h-11 items-center rounded-full border border-border bg-muted px-5">
-                    <input
-                      value={mealUnit}
-	                      onChange={(event) => {
-	                        setMealUnit(event.target.value);
-	                        resetMealEstimate();
-	                        setError("");
-	                      }}
-                      placeholder="g / cup / eggs"
-                      className="min-w-0 flex-1 bg-transparent text-[16px] font-medium text-foreground outline-none placeholder:text-secondary/75"
-                    />
-                  </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {mealPortionOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        setMealPortionSize(option);
+                        resetMealEstimate();
+                        setError("");
+                      }}
+                      className={`h-10 rounded-full border text-[14px] font-semibold capitalize transition active:scale-[0.98] ${
+                        mealPortionSize === option
+                          ? "border-[#32D74B]/65 bg-[#32D74B]/16 text-[#32D74B]"
+                          : "border-border bg-muted text-foreground/65"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
 
 	                {mealEstimateStatus === "estimated" || error ? (
 	                  <div className="space-y-2">
 	                    {mealEstimate ? (
 	                      <p className="text-[13px] font-medium text-secondary/85">
-	                        {mealEstimate.source === "ai" ? "AI estimate" : "Local estimate"}
-	                        {mealEstimate.confidence === "low" ? " · edit if needed" : ""}
+	                        Local reference estimate
+	                        {mealEstimate.grams ? ` · about ${mealEstimate.grams}g` : ""}
 	                      </p>
 	                    ) : null}
 	                    <div className="flex h-11 items-center rounded-full border border-border bg-muted px-5">

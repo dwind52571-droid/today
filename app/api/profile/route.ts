@@ -9,10 +9,11 @@ type ProfileRequest = {
   activity_level?: unknown;
   language?: unknown;
   theme?: unknown;
+  show_on_leaderboard?: unknown;
 };
 
 const profileSelect =
-  "id, display_name, gender, date_of_birth, height_cm, activity_level, language, theme, created_at, updated_at";
+  "id, display_name, gender, date_of_birth, height_cm, activity_level, language, theme, show_on_leaderboard, created_at, updated_at";
 
 function normalizeLanguage(value: unknown) {
   return value === "zh" ? "zh" : "en";
@@ -84,6 +85,7 @@ export async function GET() {
           activity_level: null,
           language: "en",
           theme: "dark",
+          show_on_leaderboard: false,
         },
   );
 }
@@ -122,6 +124,10 @@ export async function PATCH(request: Request) {
   const language =
     body?.language === undefined ? undefined : normalizeLanguage(body.language);
   const theme = body?.theme === undefined ? undefined : normalizeTheme(body.theme);
+  const showOnLeaderboard =
+    body?.show_on_leaderboard === undefined
+      ? undefined
+      : body.show_on_leaderboard === true;
 
   const update = {
     user_id: user.id,
@@ -132,6 +138,9 @@ export async function PATCH(request: Request) {
     ...(activityLevel !== undefined ? { activity_level: activityLevel } : {}),
     ...(language !== undefined ? { language } : {}),
     ...(theme !== undefined ? { theme } : {}),
+    ...(showOnLeaderboard !== undefined
+      ? { show_on_leaderboard: showOnLeaderboard }
+      : {}),
   };
 
   const { data, error } = await supabase
