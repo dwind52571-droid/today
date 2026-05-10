@@ -53,6 +53,16 @@ const standaloneFoodWords = [
   "bread",
   "tofu",
   "potato",
+  "tomato",
+  "cucumber",
+  "noodles",
+  "wonton",
+  "soup",
+  "shrimp",
+  "duck",
+  "lamb",
+  "milk",
+  "tea",
 ];
 
 export const foodReferenceLibrary: FoodReferenceItem[] = [
@@ -64,6 +74,19 @@ export const foodReferenceLibrary: FoodReferenceItem[] = [
   item("tomato-egg-noodles", "Tomato Egg Noodles", ["tomato egg noodles", "西红柿鸡蛋面", "番茄鸡蛋面"], 125, 300, "weight"),
   item("fried-rice", "Fried Rice", ["fried rice", "egg fried rice", "炒饭", "蛋炒饭"], 175, 225, "weight"),
   item("yangzhou-fried-rice", "Yangzhou Fried Rice", ["yangzhou fried rice", "扬州炒饭"], 180, 225, "weight"),
+  item("rice-noodle", "Rice Noodles", ["rice noodles", "rice noodle", "米粉", "米线"], 115, 300, "weight"),
+  item("rice-roll", "Rice Roll", ["rice roll", "cheung fun", "肠粉"], 120, 250, "weight"),
+  item("ho-fun", "Ho Fun", ["ho fun", "rice noodles roll", "河粉", "炒河粉"], 170, 225, "weight"),
+  item("lanzhou-noodles", "Lanzhou Beef Noodles", ["lanzhou noodles", "lanzhou beef noodles", "兰州拉面", "牛肉面"], 125, 350, "weight"),
+  item("ramen", "Ramen", ["ramen", "日式拉面", "拉面"], 135, 350, "weight"),
+  item("wonton", "Wonton", ["wonton", "wonton soup", "馄饨", "云吞", "抄手"], 160, 250, "weight"),
+  item("hot-sour-noodles", "Hot and Sour Noodles", ["hot and sour noodles", "酸辣粉"], 160, 300, "weight"),
+  item("luosifen", "Luosifen", ["luosifen", "螺蛳粉"], 170, 350, "weight"),
+  item("malatang", "Malatang", ["malatang", "spicy hot pot", "麻辣烫"], 145, 375, "weight"),
+  item("jianbing", "Jianbing", ["jianbing", "chinese crepe", "煎饼果子", "煎饼"], 240, 180, "unit"),
+  item("cold-noodles", "Cold Noodles", ["cold noodles", "凉面", "冷面"], 155, 300, "weight"),
+  item("liangpi", "Liangpi", ["liangpi", "cold skin noodles", "凉皮"], 150, 300, "weight"),
+  item("roujiamo", "Roujiamo", ["roujiamo", "chinese burger", "肉夹馍"], 260, 180, "unit"),
   item("dumplings", "Dumplings", ["dumpling", "dumplings", "jiaozi", "饺子", "水饺"], 230, 250, "weight"),
   item("xiaolongbao", "Xiaolongbao", ["xiaolongbao", "soup dumpling", "小笼包", "小笼"], 235, 150, "unit"),
   item("baozi", "Baozi", ["baozi", "steamed bun", "包子"], 220, 100, "unit"),
@@ -76,11 +99,25 @@ export const foodReferenceLibrary: FoodReferenceItem[] = [
   item("hong-shao-rou", "Braised Pork Belly", ["braised pork belly", "red braised pork", "红烧肉"], 395, 225, "weight"),
   item("dongpo-pork", "Dongpo Pork", ["dongpo pork", "东坡肉"], 430, 225, "weight"),
   item("kung-pao-chicken", "Kung Pao Chicken", ["kung pao chicken", "kungpao chicken", "宫保鸡丁"], 190, 225, "weight"),
+  item("huangmen-chicken", "Huangmen Chicken", ["huangmen chicken", "braised chicken rice", "黄焖鸡", "黄焖鸡米饭"], 170, 300, "weight"),
+  item("chicken-rice-bowl", "Chicken Rice Bowl", ["chicken rice bowl", "chicken leg rice", "鸡腿饭", "鸡肉饭", "照烧鸡饭"], 165, 350, "weight"),
+  item("beef-rice-bowl", "Beef Rice Bowl", ["beef rice bowl", "牛肉饭", "肥牛饭"], 170, 350, "weight"),
+  item("pork-rice-bowl", "Pork Rice Bowl", ["pork rice bowl", "卤肉饭", "猪肉饭"], 190, 350, "weight"),
+  item("claypot-rice", "Claypot Rice", ["claypot rice", "煲仔饭"], 180, 350, "weight"),
+  item("curry-chicken-rice", "Curry Chicken Rice", ["curry chicken rice", "咖喱鸡饭", "咖喱饭"], 165, 350, "weight"),
   item("yu-xiang-pork", "Yu Xiang Shredded Pork", ["yu xiang pork", "fish fragrant pork", "鱼香肉丝"], 185, 225, "weight"),
   item("mapo-tofu", "Mapo Tofu", ["mapo tofu", "麻婆豆腐"], 145, 225, "weight"),
   item("twice-cooked-pork", "Twice Cooked Pork", ["twice cooked pork", "回锅肉"], 260, 225, "weight"),
   item("boiled-beef", "Sichuan Boiled Beef", ["sichuan boiled beef", "boiled beef", "水煮牛肉"], 190, 225, "weight"),
+  item("boiled-fish", "Sichuan Boiled Fish", ["sichuan boiled fish", "boiled fish", "水煮鱼"], 160, 225, "weight"),
+  item("spicy-chicken", "Spicy Chicken", ["spicy chicken", "辣子鸡"], 260, 225, "weight"),
+  item("cumin-lamb", "Cumin Lamb", ["cumin lamb", "孜然羊肉"], 240, 225, "weight"),
+  item("stir-fried-beef", "Stir Fried Beef", ["stir fried beef", "小炒牛肉", "炒牛肉"], 210, 225, "weight"),
+  item("shredded-potato", "Shredded Potato", ["shredded potato", "土豆丝", "炒土豆丝"], 105, 225, "weight"),
   item("tomato-egg", "Tomato Egg", ["tomato egg", "tomato scrambled egg", "西红柿炒蛋", "番茄炒蛋"], 115, 225, "weight"),
+  item("eggplant-garlic", "Garlic Eggplant", ["garlic eggplant", "鱼香茄子", "蒜蓉茄子", "茄子"], 125, 225, "weight"),
+  item("dry-pot-cauliflower", "Dry Pot Cauliflower", ["dry pot cauliflower", "干锅花菜", "干锅菜花"], 145, 225, "weight"),
+  item("scrambled-egg", "Scrambled Egg", ["scrambled egg", "scrambled eggs", "炒鸡蛋"], 200, 225, "weight"),
   item("green-pepper-pork", "Green Pepper Shredded Pork", ["green pepper pork", "青椒肉丝"], 160, 225, "weight"),
   item("braised-fish", "Braised Fish", ["braised fish", "red braised fish", "红烧鱼"], 170, 225, "weight"),
   item("steamed-fish", "Steamed Fish", ["steamed fish", "清蒸鱼"], 130, 225, "weight"),
@@ -98,6 +135,11 @@ export const foodReferenceLibrary: FoodReferenceItem[] = [
   item("stinky-mandarin-fish", "Stinky Mandarin Fish", ["stinky mandarin fish", "臭鳜鱼"], 160, 225, "weight"),
   item("buddha-jumps-wall", "Buddha Jumps Over The Wall", ["buddha jumps over the wall", "佛跳墙"], 150, 225, "weight"),
   item("longjing-shrimp", "Longjing Shrimp", ["longjing shrimp", "龙井虾仁"], 120, 225, "weight"),
+  item("shrimp", "Shrimp", ["shrimp", "prawn", "虾", "虾仁"], 100, 225, "weight"),
+  item("stir-fried-cabbage", "Stir Fried Cabbage", ["stir fried cabbage", "手撕包菜", "炒包菜", "包菜"], 85, 225, "weight"),
+  item("hot-sour-soup", "Hot and Sour Soup", ["hot and sour soup", "酸辣汤"], 45, 300, "weight"),
+  item("egg-drop-soup", "Egg Drop Soup", ["egg drop soup", "紫菜蛋花汤", "蛋花汤"], 35, 300, "weight"),
+  item("corn-soup", "Corn Soup", ["corn soup", "玉米汤"], 55, 300, "weight"),
 
   // Western foods
   item("hamburger", "Hamburger", ["hamburger", "burger", "cheeseburger", "汉堡", "汉堡包"], 260, 180, "unit"),
@@ -115,6 +157,12 @@ export const foodReferenceLibrary: FoodReferenceItem[] = [
   item("cheese", "Cheese", ["cheese", "奶酪", "芝士"], 350, 30, "unit"),
   item("cereal", "Cereal", ["cereal", "breakfast cereal", "麦片", "谷物麦片"], 370, 40, "unit"),
   item("fried-chicken", "Fried Chicken", ["fried chicken", "炸鸡"], 290, 180, "unit"),
+  item("chicken-nuggets", "Chicken Nuggets", ["chicken nuggets", "nuggets", "鸡块", "麦乐鸡"], 295, 120, "unit"),
+  item("hot-dog", "Hot Dog", ["hot dog", "热狗"], 290, 150, "unit"),
+  item("lasagna", "Lasagna", ["lasagna", "千层面"], 165, 225, "weight"),
+  item("burrito", "Burrito", ["burrito", "墨西哥卷饼"], 220, 250, "unit"),
+  item("taco", "Taco", ["taco", "塔可"], 225, 120, "unit"),
+  item("sushi", "Sushi", ["sushi", "寿司"], 150, 200, "weight"),
 
   // Simple foods, fruit, vegetables
   item("egg", "Egg", ["egg", "eggs", "boiled egg", "鸡蛋", "水煮蛋", "煮鸡蛋"], 155, 50, "unit"),
@@ -132,12 +180,28 @@ export const foodReferenceLibrary: FoodReferenceItem[] = [
   item("cucumber", "Cucumber", ["cucumber", "黄瓜"], 15, 150, "unit"),
   item("broccoli", "Broccoli", ["broccoli", "西兰花"], 35, 225, "weight"),
   item("spinach", "Spinach", ["spinach", "菠菜"], 23, 225, "weight"),
+  item("bok-choy", "Bok Choy", ["bok choy", "小白菜", "上海青", "油菜"], 18, 225, "weight"),
+  item("cabbage", "Cabbage", ["cabbage", "卷心菜", "包菜", "白菜"], 25, 225, "weight"),
   item("lettuce", "Lettuce", ["lettuce", "生菜"], 15, 150, "unit"),
   item("carrot", "Carrot", ["carrot", "胡萝卜"], 41, 150, "unit"),
+  item("mushroom", "Mushroom", ["mushroom", "mushrooms", "蘑菇", "香菇", "金针菇"], 30, 225, "weight"),
+  item("cauliflower", "Cauliflower", ["cauliflower", "花菜", "菜花"], 25, 225, "weight"),
+  item("winter-melon", "Winter Melon", ["winter melon", "冬瓜"], 13, 225, "weight"),
+  item("pumpkin", "Pumpkin", ["pumpkin", "南瓜"], 26, 225, "weight"),
+  item("eggplant", "Eggplant", ["eggplant", "aubergine", "茄子"], 25, 225, "weight"),
   item("potato", "Potato", ["potato", "土豆", "马铃薯"], 77, 225, "weight"),
   item("sweet-potato", "Sweet Potato", ["sweet potato", "yam", "红薯", "地瓜"], 86, 180, "unit"),
   item("corn", "Corn", ["corn", "玉米"], 96, 160, "unit"),
   item("tofu", "Tofu", ["tofu", "bean curd", "豆腐"], 80, 225, "weight"),
+  item("edamame", "Edamame", ["edamame", "毛豆"], 122, 150, "unit"),
+  item("peanut", "Peanuts", ["peanut", "peanuts", "花生"], 567, 30, "unit"),
+  item("almond", "Almonds", ["almond", "almonds", "杏仁"], 579, 30, "unit"),
+  item("cashew", "Cashews", ["cashew", "cashews", "腰果"], 553, 30, "unit"),
+  item("black-coffee", "Black Coffee", ["black coffee", "americano", "美式咖啡", "黑咖啡"], 2, 300, "unit"),
+  item("latte", "Latte", ["latte", "拿铁", "拿铁咖啡"], 45, 350, "unit"),
+  item("milk-tea", "Milk Tea", ["milk tea", "bubble tea", "奶茶", "珍珠奶茶"], 65, 500, "unit"),
+  item("cola", "Cola", ["cola", "coke", "可乐"], 42, 330, "unit"),
+  item("orange-juice", "Orange Juice", ["orange juice", "橙汁"], 45, 300, "unit"),
 ];
 
 function item(
@@ -187,7 +251,7 @@ function hasMultipleFoodSignal(text: string) {
 function findMatchedFoods(description: string) {
   const normalized = normalizeText(stripPortionWords(description));
   const compact = compactText(stripPortionWords(description));
-  const matches = new Set<string>();
+  const matches: Array<{ id: string; exact: boolean }> = [];
 
   for (const food of foodReferenceLibrary) {
     for (const alias of food.aliases) {
@@ -196,18 +260,19 @@ function findMatchedFoods(description: string) {
       if (!normalizedAlias || !compactAlias) continue;
 
       if (normalized === normalizedAlias || compact === compactAlias) {
-        matches.add(food.id);
+        matches.push({ id: food.id, exact: true });
         break;
       }
 
       if (normalized.includes(normalizedAlias) || compact.includes(compactAlias)) {
-        matches.add(food.id);
+        matches.push({ id: food.id, exact: false });
         break;
       }
     }
   }
 
-  return matches;
+  const exactMatches = matches.filter((match) => match.exact);
+  return new Set((exactMatches.length ? exactMatches : matches).map((match) => match.id));
 }
 
 function findFood(description: string) {
